@@ -88,7 +88,6 @@ lerna-debug.log
 .DS_Store
 Thumbs.db
 
-*.yaml
 *.dev.js
 
 nantoo_FCM.json
