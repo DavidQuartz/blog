@@ -1,52 +1,61 @@
-const express = require("express")
-const bodyParser = require("body-parser")
-const cors = require("cors")
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const axios = require('axios');
 
-const app = express()
+const app = express();
+app.use(bodyParser.json());
+app.use(cors());
 
-app.use(bodyParser.json())
-app.use(cors())
+const posts = {};
 
-const posts = {}
+const handleEvent = (type, data) => {
+  if (type === 'PostCreated') {
+    const { id, title } = data;
 
-app.get("/posts", (req, res) => {
-    res.send(posts)
-})
+    posts[id] = { id, title, comments: [] };
+  }
 
-app.post("/events", (req, res) => {
-    const { type, data } = req.body
+  if (type === 'CommentCreated') {
+    const { id, content, postId, status } = data;
 
-    switch (type) {
+    const post = posts[postId];
+    post.comments.push({ id, content, status });
+  }
 
-        case "PostCreated": {
-            const { id, title, body } = data
+  if (type === 'CommentUpdated') {
+    const { id, content, postId, status } = data;
 
-            posts[id] = { id, title, body, comments: [] }
+    const post = posts[postId];
+    const comment = post.comments.find(comment => {
+      return comment.id === id;
+    });
 
-            break;
-        }
+    comment.status = status;
+    comment.content = content;
+  }
+};
 
-        case "CommentCreated": {
-            const { id, content, postId } = data
+app.get('/posts', (req, res) => {
+  res.send(posts);
+});
 
-            const post = posts[postId]
-            post.comments.push({ id, content })
-            break
-        }
+app.post('/events', (req, res) => {
+  const { type, data } = req.body;
 
+  handleEvent(type, data);
 
-        default: {
-            res.status(404).json({
-                status: "failed",
-                message: "Invalid type found"
-            })
-        }
-    }
+  res.send({});
+});
 
-    res.send({})
-})
+app.listen(4002, async () => {
+  console.log('Listening on 4002');
 
+  const res = await axios.get('http://event-bus-srv:4050/events');
 
-app.listen(4060, () => {
-    console.log("listening on 4060")
-})
+  for (let event of res.data) {
+    console.log('Processing event:', event.type);
+
+    handleEvent(event.type, event.data);
+  }
+});

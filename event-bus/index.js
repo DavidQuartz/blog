@@ -10,9 +10,9 @@ app.post("/events", (req, res) => {
 
     const event = req.body
 
-    axios.post('http://localhost:4000/events', event)
-    axios.post('http://localhost:4040/events', event)
-    axios.post('http://localhost:4060/events', event)
+    axios.post('http://posts-clusterip-srv:4000/events', event)
+    // axios.post('http://localhost:4040/events', event)
+    // axios.post('http://localhost:4060/events', event)
 
     res.send({status: "OK"})
 })
